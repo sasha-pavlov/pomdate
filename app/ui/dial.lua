@@ -42,7 +42,7 @@ function Dial:init(coreProps, step, lowerLimit, upperLimit)
     self._step = step    -- step to inc/decrement value by
     self._lowLimit = lowerLimit
     self._uppLimit = upperLimit
-    self.value = self:setValue(0)
+    self:setValue(0)
     if lowerLimit and upperLimit then
         self.value = (lowerLimit + upperLimit) // 2
     elseif lowerLimit then self.value = lowerLimit
@@ -77,7 +77,6 @@ function Dial:update()
                 gfx.clear()
                 gfx.drawText("*".. val .. " " .. unit .."*", 2, 2)
             gfx.popContext()
-            self:setImage(self._img:scaledImage(2))
         end
 
         self._prevValue = val

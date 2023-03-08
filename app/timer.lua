@@ -39,6 +39,7 @@ end
 local function notify()
     --d.log("notification pushed")
     if notifSound then notifSound:play(0) end
+    --TODO do we want to let this mod state directly?
     _G.state = _G.STATES.DONE_TIMER
 end
 
@@ -68,9 +69,9 @@ end
 --]]
 -- Timer:update() draws the current time in the timer countdown
 function Timer:update()
-    local msec
+    local msec = 0 
     if self._timer then msec = self._timer.value
-    else msec = self._duration end
+    elseif self._isPaused then msec = self._duration end
 
     -- if timer has completed
     if msec <= 0 then
@@ -80,21 +81,21 @@ function Timer:update()
         gfx.popContext()
         self._timer = nil
         notify()
+    else
+        local min, sec = convertToClock(msec)
+        -- debugger.log("min: " .. min .. " sec: " .. sec)
+        -- debugger.log(self._timer.value)
+        local timeString = ""
+        if min < 10 then timeString = "0" end
+        timeString = timeString .. min .. ":"
+        if sec < 10 then timeString = timeString .. "0" end
+        timeString = timeString .. sec
+
+        gfx.pushContext(self._img)
+            gfx.clear()
+            gfx.drawText("*"..timeString.."*", 0, 0)
+        gfx.popContext()
     end
-
-    local min, sec = convertToClock(msec)
-    -- debugger.log("min: " .. min .. " sec: " .. sec)
-    -- debugger.log(self._timer.value)
-    local timeString = ""
-    if min < 10 then timeString = "0" end
-    timeString = timeString .. min .. ":"
-    if sec < 10 then timeString = timeString .. "0" end
-    timeString = timeString .. sec
-
-    gfx.pushContext(self._img)
-        gfx.clear()
-        gfx.drawText("*"..timeString.."*", 0, 0)
-    gfx.popContext()
 
     --DEBUG doing this prevents the sprite from auto-refreshing when self._img changes
     --TODO set a larger font instead of upscaling default text

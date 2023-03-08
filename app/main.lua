@@ -24,13 +24,13 @@ local B <const> = pd.kButtonB
 -- TODO can states be a set of update funcs, or do we need the enum?
 STATES = configs.STATES
 state = STATES.LOADING
-duration_defaults = {
+
+initialDurations = {
     work = 25,
     short = 5,
     long = 20,
     snooze = 2
 }
-
 local splashSprite = nil
 local timers = {
     work = 'nil',
@@ -52,15 +52,15 @@ local notifSoundPath = "notif.wav"
 --- Sets up the app environment.
 --- If a state save file exists, it will be loaded here.
 local function init()
-    utils.disableReadOnly()
-    debugger.disable()
+    --utils.disableReadOnly()
+    --debugger.disable()
     d.log("attempting to loadState")
     local loadedState = pd.datastore.read("durations")
     if loadedState then
         d.log("state file exists")
-        duration_defaults.work = loadedState.work
-        duration_defaults.short = loadedState.short
-        duration_defaults.long = loadedState.long
+        initialDurations.work = loadedState.work
+        initialDurations.short = loadedState.short
+        initialDurations.long = loadedState.long
     end
     d.log("loading attempt complete; dumping loadedState table", loadedState)
 
@@ -72,8 +72,6 @@ local function init()
     timer.setNotifSound(pd.sound.sampleplayer.new(soundPathPrefix .. notifSoundPath))
     for _, t in pairs(timers) do t:setZIndex(50) end
     currentTimer = timers.work
-
-    d.log("timers in main", timers)
 
     uimanager.init({timers.work, timers.short, timers.long})
 end
@@ -103,7 +101,7 @@ local function saveState()
     }
     for name, duration in pairs(durations) do
         if duration <= -1 then
-            durations[name] = duration_defaults[name]
+            durations[name] = initialDurations[name]
         end
     end
     d.log("dumping durations to be saved", durations)
@@ -119,6 +117,8 @@ end
 -- TODO align semantics of menu w pause
 function toMenu()
     currentTimer:remove()
+    c_pauses = 0
+    c_snoozes = 0
     pd.setAutoLockDisabled(false)
     pd.getCrankTicks(1) --TODO move this crank-data-dump to uimanager file
     state = STATES.MENU
@@ -162,6 +162,18 @@ end
 function unpause()
     if not currentTimer:isPaused() then d.log("current timer " .. currentTimer.name .. " is not paused; can't unpause")
     else currentTimer:start() end
+end
+
+--- Get the number of times the current timer has been paused
+---@return integer
+function getPauseCount()
+    return c_pauses
+end
+
+--- Get the number of times the current timer has been snoozed
+---@return integer
+function getSnoozeCount()
+    return c_snoozes
 end
 
 -- pd.update() is called right before every frame is drawn onscreen.
